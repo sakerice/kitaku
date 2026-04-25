@@ -1,0 +1,194 @@
+[
+  {
+    "path": "stickers/1_01_mukattemasu.png",
+    "sheet": 1,
+    "index": 1,
+    "id": "mukattemasu",
+    "caption": "むかってます…",
+    "mood": "仕事"
+  },
+  {
+    "path": "stickers/1_02_arigatou.png",
+    "sheet": 1,
+    "index": 2,
+    "id": "arigatou",
+    "caption": "ありがとうございます",
+    "mood": "感謝"
+  },
+  {
+    "path": "stickers/1_03_ryoukai.png",
+    "sheet": 1,
+    "index": 3,
+    "id": "ryoukai",
+    "caption": "了解…です…",
+    "mood": "返事"
+  },
+  {
+    "path": "stickers/1_04_sumimasen.png",
+    "sheet": 1,
+    "index": 4,
+    "id": "sumimasen",
+    "caption": "すみません…",
+    "mood": "謝罪"
+  },
+  {
+    "path": "stickers/1_05_otsukaresama.png",
+    "sheet": 1,
+    "index": 5,
+    "id": "otsukaresama",
+    "caption": "おつかれさまです…",
+    "mood": "仕事"
+  },
+  {
+    "path": "stickers/1_06_tadaima.png",
+    "sheet": 1,
+    "index": 6,
+    "id": "tadaima",
+    "caption": "ただいま…",
+    "mood": "日常"
+  },
+  {
+    "path": "stickers/1_07_oyasumi.png",
+    "sheet": 1,
+    "index": 7,
+    "id": "oyasumi",
+    "caption": "おやすみ…",
+    "mood": "日常"
+  },
+  {
+    "path": "stickers/1_08_ganbarimasu.png",
+    "sheet": 1,
+    "index": 8,
+    "id": "ganbarimasu",
+    "caption": "がんばります…",
+    "mood": "仕事"
+  },
+  {
+    "path": "stickers/2_01_genkai.png",
+    "sheet": 2,
+    "index": 1,
+    "id": "genkai",
+    "caption": "限界…です…",
+    "mood": "弱音"
+  },
+  {
+    "path": "stickers/2_02_shoushou-omachi.png",
+    "sheet": 2,
+    "index": 2,
+    "id": "shoushou-omachi",
+    "caption": "少々お待ちを…",
+    "mood": "返事"
+  },
+  {
+    "path": "stickers/2_03_kakunin.png",
+    "sheet": 2,
+    "index": 3,
+    "id": "kakunin",
+    "caption": "確認します…",
+    "mood": "仕事"
+  },
+  {
+    "path": "stickers/2_04_okuremasu.png",
+    "sheet": 2,
+    "index": 4,
+    "id": "okuremasu",
+    "caption": "遅れます…",
+    "mood": "仕事"
+  },
+  {
+    "path": "stickers/2_05_sakini-shitsurei.png",
+    "sheet": 2,
+    "index": 5,
+    "id": "sakini-shitsurei",
+    "caption": "先に失礼します…",
+    "mood": "仕事"
+  },
+  {
+    "path": "stickers/2_06_furo-cancel.png",
+    "sheet": 2,
+    "index": 6,
+    "id": "furo-cancel",
+    "caption": "風呂キャン",
+    "mood": "日常"
+  },
+  {
+    "path": "stickers/2_07_gohan-oishii.png",
+    "sheet": 2,
+    "index": 7,
+    "id": "gohan-oishii",
+    "caption": "ご飯おいしい…",
+    "mood": "日常"
+  },
+  {
+    "path": "stickers/2_08_seiippai.png",
+    "sheet": 2,
+    "index": 8,
+    "id": "seiippai",
+    "caption": "精一杯…",
+    "mood": "弱音"
+  },
+  {
+    "path": "stickers/3_01_mata-ashita.png",
+    "sheet": 3,
+    "index": 1,
+    "id": "mata-ashita",
+    "caption": "また明日…",
+    "mood": "仕事"
+  },
+  {
+    "path": "stickers/3_02_mou-muri.png",
+    "sheet": 3,
+    "index": 2,
+    "id": "mou-muri",
+    "caption": "もう…むり",
+    "mood": "弱音"
+  },
+  {
+    "path": "stickers/3_03_yurushite.png",
+    "sheet": 3,
+    "index": 3,
+    "id": "yurushite",
+    "caption": "ゆるして",
+    "mood": "謝罪"
+  },
+  {
+    "path": "stickers/3_04_ganbattemasu.png",
+    "sheet": 3,
+    "index": 4,
+    "id": "ganbattemasu",
+    "caption": "がんばってます…",
+    "mood": "仕事"
+  },
+  {
+    "path": "stickers/3_05_gomennasai.png",
+    "sheet": 3,
+    "index": 5,
+    "id": "gomennasai",
+    "caption": "ごめんなさい…",
+    "mood": "謝罪"
+  },
+  {
+    "path": "stickers/3_06_yasumimasu.png",
+    "sheet": 3,
+    "index": 6,
+    "id": "yasumimasu",
+    "caption": "休みます…",
+    "mood": "日常"
+  },
+  {
+    "path": "stickers/3_07_tasukarimasu.png",
+    "sheet": 3,
+    "index": 7,
+    "id": "tasukarimasu",
+    "caption": "たすかります…",
+    "mood": "感謝"
+  },
+  {
+    "path": "stickers/3_08_nemui.png",
+    "sheet": 3,
+    "index": 8,
+    "id": "nemui",
+    "caption": "ねむい…",
+    "mood": "日常"
+  }
+]

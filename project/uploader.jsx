@@ -7,31 +7,149 @@
 
 const { useState, useRef, useCallback, useEffect, useMemo } = React;
 
-const ASPECT_RATIOS = [
-  { v: 'original', label: '元' },
-  { v: '1:1',  label: '1:1' },
-  { v: '4:3',  label: '4:3' },
-  { v: '3:4',  label: '3:4' },
-  { v: '16:9', label: '16:9' },
-  { v: '9:16', label: '9:16' },
-];
-
-function fitCanvasToRatio(srcCanvas, ratio) {
-  if (ratio === 'original') return srcCanvas;
-  const [rw, rh] = ratio.split(':').map(Number);
-  const sw = srcCanvas.width, sh = srcCanvas.height;
-  let tw, th;
-  if (sw / sh > rw / rh) { tw = sw; th = Math.round(sw * rh / rw); }
-  else                    { th = sh; tw = Math.round(sh * rw / rh); }
-  const out = document.createElement('canvas');
-  out.width = tw; out.height = th;
-  out.getContext('2d').drawImage(srcCanvas, Math.round((tw - sw) / 2), Math.round((th - sh) / 2));
-  return out;
-}
-
 function canvasToBlob(canvas) {
   return new Promise(res => canvas.toBlob(res, 'image/png'));
 }
+
+// ── Per-sticker crop editor modal ───────────────────────────────────────────
+
+function CropEditor({ canvas, onConfirm, onCancel }) {
+  const MAXDIM = 500;
+  const W = canvas.width, H = canvas.height;
+  const scale = Math.min(1, MAXDIM / Math.max(W, H));
+  const dispW = Math.round(W * scale);
+  const dispH = Math.round(H * scale);
+
+  const imgSrc = useMemo(() => canvas.toDataURL('image/png'), [canvas]);
+  const [crop, setCrop] = useState({ l: 0, t: 0, r: W, b: H });
+
+  const startDrag = (edge) => (e) => {
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY;
+    const sv = crop[edge];
+    const onMove = (ev) => {
+      const dx = (ev.clientX - sx) / scale;
+      const dy = (ev.clientY - sy) / scale;
+      setCrop(prev => {
+        const next = { ...prev };
+        if (edge === 'l') next.l = Math.max(0, Math.min(Math.round(sv + dx), prev.r - 8));
+        if (edge === 'r') next.r = Math.max(prev.l + 8, Math.min(Math.round(sv + dx), W));
+        if (edge === 't') next.t = Math.max(0, Math.min(Math.round(sv + dy), prev.b - 8));
+        if (edge === 'b') next.b = Math.max(prev.t + 8, Math.min(Math.round(sv + dy), H));
+        return next;
+      });
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  const handleConfirm = () => {
+    const cw = crop.r - crop.l, ch = crop.b - crop.t;
+    const out = document.createElement('canvas');
+    out.width = cw; out.height = ch;
+    out.getContext('2d').drawImage(canvas, crop.l, crop.t, cw, ch, 0, 0, cw, ch);
+    onConfirm(out);
+  };
+
+  return (
+    <div style={cropStyles.backdrop} onClick={onCancel}>
+      <div style={cropStyles.modal} onClick={e => e.stopPropagation()}>
+        <div style={cropStyles.header}>
+          <span className="maru" style={{ fontSize: 16, fontWeight: 700 }}>トリミング</span>
+          <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>
+            {crop.r - crop.l} × {crop.b - crop.t} px
+          </span>
+        </div>
+        <div style={cropStyles.stageWrap}>
+          <div
+            className="checker"
+            style={{ position: 'relative', width: dispW, height: dispH, userSelect: 'none', touchAction: 'none', flexShrink: 0 }}
+          >
+            <img src={imgSrc} draggable={false}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none' }}
+            />
+            {/* Dark overlay outside crop region */}
+            <div style={{
+              position: 'absolute',
+              left: crop.l * scale, top: crop.t * scale,
+              width: (crop.r - crop.l) * scale, height: (crop.b - crop.t) * scale,
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)',
+              border: '1.5px solid rgba(255,255,255,0.85)',
+              pointerEvents: 'none',
+            }} />
+            {/* Drag handles: wide transparent hit area + thin white line */}
+            {[
+              { edge: 'l', s: { left: crop.l * scale - 6, top: 0, bottom: 0, width: 12, cursor: 'ew-resize' },
+                           v: { left: 5, top: 0, bottom: 0, width: 2 } },
+              { edge: 'r', s: { left: crop.r * scale - 6, top: 0, bottom: 0, width: 12, cursor: 'ew-resize' },
+                           v: { left: 5, top: 0, bottom: 0, width: 2 } },
+              { edge: 't', s: { top: crop.t * scale - 6, left: 0, right: 0, height: 12, cursor: 'ns-resize' },
+                           v: { top: 5, left: 0, right: 0, height: 2 } },
+              { edge: 'b', s: { top: crop.b * scale - 6, left: 0, right: 0, height: 12, cursor: 'ns-resize' },
+                           v: { top: 5, left: 0, right: 0, height: 2 } },
+            ].map(({ edge, s, v }) => (
+              <div key={edge} onPointerDown={startDrag(edge)}
+                style={{ position: 'absolute', ...s }}>
+                <div style={{ position: 'absolute', background: 'white', boxShadow: '0 0 3px rgba(0,0,0,0.6)', ...v }} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={cropStyles.footer}>
+          <button style={cropStyles.cancelBtn} onClick={onCancel}>キャンセル</button>
+          <button style={cropStyles.resetBtn} onClick={() => setCrop({ l: 0, t: 0, r: W, b: H })}>リセット</button>
+          <button style={cropStyles.confirmBtn} onClick={handleConfirm}>確定</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const cropStyles = {
+  backdrop: {
+    position: 'fixed', inset: 0, zIndex: 200,
+    background: 'rgba(43,38,32,0.65)',
+    backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: 24,
+  },
+  modal: {
+    background: 'var(--bg)', border: '1px solid var(--line)',
+    borderRadius: 20, overflow: 'hidden',
+    maxWidth: 600, width: '100%',
+    boxShadow: '0 32px 80px -20px rgba(43,38,32,0.5)',
+  },
+  header: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '14px 20px', borderBottom: '1px solid var(--line)',
+  },
+  stageWrap: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: 24, background: '#1a1612', minHeight: 160, overflow: 'auto',
+  },
+  footer: {
+    display: 'flex', gap: 8, justifyContent: 'flex-end',
+    padding: '12px 16px', borderTop: '1px solid var(--line)',
+    background: 'var(--card)',
+  },
+  cancelBtn: {
+    padding: '9px 16px', border: '1px solid var(--line)', borderRadius: 999,
+    background: 'transparent', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', color: 'var(--ink)',
+  },
+  resetBtn: {
+    padding: '9px 16px', border: '1px solid var(--line)', borderRadius: 999,
+    background: 'transparent', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', color: 'var(--ink-2)',
+  },
+  confirmBtn: {
+    padding: '9px 20px', border: 'none', borderRadius: 999,
+    background: 'var(--accent)', fontSize: 13, fontWeight: 700,
+    fontFamily: 'inherit', cursor: 'pointer', color: 'white',
+  },
+};
 
 // Build evenly-spaced lines across [0, total] with `count`+1 endpoints.
 function evenLines(count, total) {
@@ -314,19 +432,20 @@ function StickerUploader({ onAddToGallery }) {
     }
   }, [imageEl, rows, cols, tolerance, bgMode, pickedColor, xs, ys]);
 
-  const changeAspect = useCallback(async (idx, ratio) => {
-    const r = results[idx];
-    if (!r || r.empty) return;
-    const newCanvas = fitCanvasToRatio(r.originalCanvas, ratio);
-    const blob = await canvasToBlob(newCanvas);
+  const [cropTarget, setCropTarget] = useState(null);
+
+  const applyCropTo = useCallback(async (idx, croppedCanvas) => {
+    const blob = await canvasToBlob(croppedCanvas);
     const url = URL.createObjectURL(blob);
-    if (r.url) URL.revokeObjectURL(r.url);
     setResults(prev => {
       const next = [...prev];
-      next[idx] = { ...r, canvas: newCanvas, blob, url, width: newCanvas.width, height: newCanvas.height, aspect: ratio };
+      const r = next[idx];
+      if (r.url) URL.revokeObjectURL(r.url);
+      next[idx] = { ...r, canvas: croppedCanvas, blob, url, width: croppedCanvas.width, height: croppedCanvas.height };
       return next;
     });
-  }, [results]);
+    setCropTarget(null);
+  }, []);
 
   const downloadOne = (r, idx) => {
     const a = document.createElement('a');
@@ -545,29 +664,22 @@ function StickerUploader({ onAddToGallery }) {
                   <span className="mono" style={uStyles.resultMeta}>
                     {r.width}×{r.height}
                   </span>
-                  <div style={uStyles.aspectRow}>
-                    {ASPECT_RATIOS.map(ar => (
-                      <button
-                        key={ar.v}
-                        onClick={() => changeAspect(i, ar.v)}
-                        style={{
-                          ...uStyles.aspectBtn,
-                          ...((r.aspect || 'original') === ar.v ? uStyles.aspectBtnOn : null),
-                        }}
-                      >
-                        {ar.label}
-                      </button>
-                    ))}
-                  </div>
-                  {onAddToGallery && (
+                  <div style={uStyles.cardFooter}>
                     <button
-                      onClick={() => onAddToGallery(r)}
-                      style={uStyles.addToGalleryBtn}
-                      title="上のギャラリーに追加"
+                      onClick={() => setCropTarget({ idx: i })}
+                      style={uStyles.trimBtn}
                     >
-                      ＋ ギャラリーに追加
+                      トリミング
                     </button>
-                  )}
+                    {onAddToGallery && (
+                      <button
+                        onClick={() => onAddToGallery(r)}
+                        style={uStyles.addToGalleryBtn}
+                      >
+                        ＋ 追加
+                      </button>
+                    )}
+                  </div>
                 </div>
               )
             )}
@@ -576,6 +688,13 @@ function StickerUploader({ onAddToGallery }) {
             ※ ここで生成されたPNGはセッション中のみ保持されます。リロードで消えますのでダウンロードしてご利用ください。
           </p>
         </div>
+      )}
+      {cropTarget !== null && results[cropTarget.idx] && !results[cropTarget.idx].empty && (
+        <CropEditor
+          canvas={results[cropTarget.idx].originalCanvas}
+          onConfirm={(c) => applyCropTo(cropTarget.idx, c)}
+          onCancel={() => setCropTarget(null)}
+        />
       )}
     </section>
   );
@@ -820,43 +939,32 @@ const uStyles = {
     padding: '2px 6px',
     borderRadius: 4,
   },
-  aspectRow: {
+  cardFooter: {
     display: 'flex',
-    flexWrap: 'wrap',
-    gap: 3,
-    padding: '6px 8px 8px',
     borderTop: '1px solid var(--line)',
-    background: 'var(--card)',
   },
-  aspectBtn: {
-    border: '1px solid var(--line)',
-    background: 'transparent',
-    color: 'var(--ink-2)',
-    padding: '3px 6px',
-    borderRadius: 999,
-    fontSize: 10,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    lineHeight: 1.4,
-  },
-  aspectBtnOn: {
-    background: 'var(--accent)',
-    borderColor: 'var(--accent)',
-    color: 'white',
-  },
-  addToGalleryBtn: {
-    display: 'block',
-    width: '100%',
+  trimBtn: {
+    flex: 1,
     padding: '7px 0',
     border: 'none',
-    borderTop: '1px solid var(--line)',
+    borderRight: '1px solid var(--line)',
+    background: 'var(--card)',
+    color: 'var(--ink-2)',
+    fontSize: 11,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+  },
+  addToGalleryBtn: {
+    flex: 1,
+    padding: '7px 0',
+    border: 'none',
     background: 'var(--accent-soft)',
     color: 'var(--accent)',
     fontSize: 11,
     fontWeight: 700,
     fontFamily: 'inherit',
     cursor: 'pointer',
-    letterSpacing: '0.02em',
   },
   resultEmpty: {
     aspectRatio: '1 / 1',

@@ -81,15 +81,15 @@ function CropEditor({ canvas, onConfirm, onCancel }) {
               border: '1.5px solid rgba(255,255,255,0.85)',
               pointerEvents: 'none',
             }} />
-            {/* Drag handles: wide transparent hit area + thin white line */}
+            {/* Drag handles: clamped within image bounds so they never reach the dialog edge */}
             {[
-              { edge: 'l', s: { left: crop.l * scale - 6, top: 0, bottom: 0, width: 12, cursor: 'ew-resize' },
+              { edge: 'l', s: { left: Math.max(0, crop.l * scale - 6), top: 0, bottom: 0, width: 12, cursor: 'ew-resize' },
+                           v: { left: Math.min(5, crop.l * scale), top: 0, bottom: 0, width: 2 } },
+              { edge: 'r', s: { left: Math.min(dispW - 12, crop.r * scale - 6), top: 0, bottom: 0, width: 12, cursor: 'ew-resize' },
                            v: { left: 5, top: 0, bottom: 0, width: 2 } },
-              { edge: 'r', s: { left: crop.r * scale - 6, top: 0, bottom: 0, width: 12, cursor: 'ew-resize' },
-                           v: { left: 5, top: 0, bottom: 0, width: 2 } },
-              { edge: 't', s: { top: crop.t * scale - 6, left: 0, right: 0, height: 12, cursor: 'ns-resize' },
-                           v: { top: 5, left: 0, right: 0, height: 2 } },
-              { edge: 'b', s: { top: crop.b * scale - 6, left: 0, right: 0, height: 12, cursor: 'ns-resize' },
+              { edge: 't', s: { top: Math.max(0, crop.t * scale - 6), left: 0, right: 0, height: 12, cursor: 'ns-resize' },
+                           v: { top: Math.min(5, crop.t * scale), left: 0, right: 0, height: 2 } },
+              { edge: 'b', s: { top: Math.min(dispH - 12, crop.b * scale - 6), left: 0, right: 0, height: 12, cursor: 'ns-resize' },
                            v: { top: 5, left: 0, right: 0, height: 2 } },
             ].map(({ edge, s, v }) => (
               <div key={edge} onPointerDown={startDrag(edge)}
@@ -129,7 +129,7 @@ const cropStyles = {
   },
   stageWrap: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 24, background: '#1a1612', minHeight: 160, overflow: 'auto',
+    padding: 40, background: '#1a1612', minHeight: 160, overflow: 'auto',
   },
   footer: {
     display: 'flex', gap: 8, justifyContent: 'flex-end',

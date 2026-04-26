@@ -366,12 +366,14 @@ function App() {
 
   const handleAddToGallery = useCallback((extracted) => {
     const id = `custom_${++customCounter.current}`;
+    // Create a fresh blob URL so applyCropTo revoking the result's URL doesn't break the gallery image
+    const freshUrl = URL.createObjectURL(extracted.blob);
     setCustomStickers(prev => [...prev, {
       customId: id,
       id,
       caption: `カスタム ${customCounter.current}`,
       mood: 'カスタム',
-      url: extracted.url,
+      url: freshUrl,
       isCustom: true,
       width: extracted.width,
       height: extracted.height,
@@ -392,7 +394,7 @@ function App() {
       }
       return true;
     });
-  }, [mood, query]);
+  }, [mood, query, allStickers]);
 
   const handleDownload = useCallback(async (sticker, sz) => {
     try {
@@ -859,7 +861,7 @@ styleEl.textContent = `
   article:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(43,38,32,0.04), 0 16px 30px -14px rgba(43,38,32,0.28) !important; }
   article:hover [data-zoom] { opacity: 1; }
   button { outline: none; }
-  button:focus-visible, a:focus-visible, input:focus-visible {
+  a:focus-visible, input:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 2px;
   }
   button:hover [stroke] { stroke: currentColor; }

@@ -14,14 +14,32 @@ function canvasToBlob(canvas) {
 // ── Per-sticker crop editor modal ───────────────────────────────────────────
 
 function CropEditor({ canvas, onConfirm, onCancel }) {
-  const MAXDIM = 500;
-  const W = canvas.width, H = canvas.height;
+  // Expand canvas with transparent padding so crop lines can reach outside the sticker
+  const EXPAND = Math.max(40, Math.round(Math.min(canvas.width, canvas.height) * 0.25));
+  const expanded = useMemo(() => {
+    const c = document.createElement('canvas');
+    c.width = canvas.width + EXPAND * 2;
+    c.height = canvas.height + EXPAND * 2;
+    c.getContext('2d').drawImage(canvas, EXPAND, EXPAND);
+    return c;
+  }, [canvas]);
+
+  const W = expanded.width, H = expanded.height;
+
+  // Responsive scale: fit within viewport minus modal chrome
+  const MAXDIM = Math.min(
+    window.innerWidth - 120,
+    window.innerHeight - 240,
+    520
+  );
   const scale = Math.min(1, MAXDIM / Math.max(W, H));
   const dispW = Math.round(W * scale);
   const dispH = Math.round(H * scale);
 
-  const imgSrc = useMemo(() => canvas.toDataURL('image/png'), [canvas]);
-  const [crop, setCrop] = useState({ l: 0, t: 0, r: W, b: H });
+  const imgSrc = useMemo(() => expanded.toDataURL('image/png'), [expanded]);
+  // Initial crop = original sticker bounds inside the expanded canvas
+  const initCrop = { l: EXPAND, t: EXPAND, r: W - EXPAND, b: H - EXPAND };
+  const [crop, setCrop] = useState(initCrop);
 
   const startDrag = (edge) => (e) => {
     e.preventDefault();
@@ -51,9 +69,12 @@ function CropEditor({ canvas, onConfirm, onCancel }) {
     const cw = crop.r - crop.l, ch = crop.b - crop.t;
     const out = document.createElement('canvas');
     out.width = cw; out.height = ch;
-    out.getContext('2d').drawImage(canvas, crop.l, crop.t, cw, ch, 0, 0, cw, ch);
+    out.getContext('2d').drawImage(expanded, crop.l, crop.t, cw, ch, 0, 0, cw, ch);
     onConfirm(out);
   };
+
+  // Handle size: 20px for easier touch on mobile
+  const HS = 20;
 
   return (
     <div style={cropStyles.backdrop} onClick={onCancel}>
@@ -67,41 +88,44 @@ function CropEditor({ canvas, onConfirm, onCancel }) {
         <div style={cropStyles.stageWrap}>
           <div
             className="checker"
-            style={{ position: 'relative', width: dispW, height: dispH, userSelect: 'none', touchAction: 'none', flexShrink: 0 }}
+            style={{ position: 'relative', width: dispW, height: dispH,
+                     userSelect: 'none', touchAction: 'none', flexShrink: 0 }}
           >
             <img src={imgSrc} draggable={false}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
+                       objectFit: 'fill', pointerEvents: 'none' }}
             />
             {/* Dark overlay outside crop region */}
             <div style={{
               position: 'absolute',
               left: crop.l * scale, top: crop.t * scale,
               width: (crop.r - crop.l) * scale, height: (crop.b - crop.t) * scale,
-              boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)',
-              border: '1.5px solid rgba(255,255,255,0.85)',
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
+              border: '1.5px solid rgba(255,255,255,0.9)',
               pointerEvents: 'none',
             }} />
-            {/* Drag handles: clamped within image bounds so they never reach the dialog edge */}
+            {/* Drag handles: 20px hit area, clamped within image */}
             {[
-              { edge: 'l', s: { left: Math.max(0, crop.l * scale - 6), top: 0, bottom: 0, width: 12, cursor: 'ew-resize' },
-                           v: { left: Math.min(5, crop.l * scale), top: 0, bottom: 0, width: 2 } },
-              { edge: 'r', s: { left: Math.min(dispW - 12, crop.r * scale - 6), top: 0, bottom: 0, width: 12, cursor: 'ew-resize' },
-                           v: { left: 5, top: 0, bottom: 0, width: 2 } },
-              { edge: 't', s: { top: Math.max(0, crop.t * scale - 6), left: 0, right: 0, height: 12, cursor: 'ns-resize' },
-                           v: { top: Math.min(5, crop.t * scale), left: 0, right: 0, height: 2 } },
-              { edge: 'b', s: { top: Math.min(dispH - 12, crop.b * scale - 6), left: 0, right: 0, height: 12, cursor: 'ns-resize' },
-                           v: { top: 5, left: 0, right: 0, height: 2 } },
+              { edge: 'l', s: { left: Math.max(0, crop.l * scale - HS/2), top: 0, bottom: 0, width: HS, cursor: 'ew-resize' },
+                           v: { left: HS/2 - 1, top: 0, bottom: 0, width: 2 } },
+              { edge: 'r', s: { left: Math.min(dispW - HS, crop.r * scale - HS/2), top: 0, bottom: 0, width: HS, cursor: 'ew-resize' },
+                           v: { left: HS/2 - 1, top: 0, bottom: 0, width: 2 } },
+              { edge: 't', s: { top: Math.max(0, crop.t * scale - HS/2), left: 0, right: 0, height: HS, cursor: 'ns-resize' },
+                           v: { top: HS/2 - 1, left: 0, right: 0, height: 2 } },
+              { edge: 'b', s: { top: Math.min(dispH - HS, crop.b * scale - HS/2), left: 0, right: 0, height: HS, cursor: 'ns-resize' },
+                           v: { top: HS/2 - 1, left: 0, right: 0, height: 2 } },
             ].map(({ edge, s, v }) => (
               <div key={edge} onPointerDown={startDrag(edge)}
                 style={{ position: 'absolute', ...s }}>
-                <div style={{ position: 'absolute', background: 'white', boxShadow: '0 0 3px rgba(0,0,0,0.6)', ...v }} />
+                <div style={{ position: 'absolute', background: 'white',
+                              boxShadow: '0 0 4px rgba(0,0,0,0.7)', ...v }} />
               </div>
             ))}
           </div>
         </div>
         <div style={cropStyles.footer}>
           <button style={cropStyles.cancelBtn} onClick={onCancel}>キャンセル</button>
-          <button style={cropStyles.resetBtn} onClick={() => setCrop({ l: 0, t: 0, r: W, b: H })}>リセット</button>
+          <button style={cropStyles.resetBtn} onClick={() => setCrop(initCrop)}>リセット</button>
           <button style={cropStyles.confirmBtn} onClick={handleConfirm}>確定</button>
         </div>
       </div>
@@ -121,6 +145,8 @@ const cropStyles = {
     background: 'var(--bg)', border: '1px solid var(--line)',
     borderRadius: 20, overflow: 'hidden',
     maxWidth: 600, width: '100%',
+    maxHeight: 'calc(100svh - 40px)',
+    display: 'flex', flexDirection: 'column',
     boxShadow: '0 32px 80px -20px rgba(43,38,32,0.5)',
   },
   header: {
@@ -129,7 +155,8 @@ const cropStyles = {
   },
   stageWrap: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 40, background: '#1a1612', minHeight: 160, overflow: 'auto',
+    padding: 32, background: '#1a1612',
+    flex: '1 1 0', minHeight: 0, overflow: 'auto',
   },
   footer: {
     display: 'flex', gap: 8, justifyContent: 'flex-end',

@@ -187,12 +187,13 @@ function FilterBar({ mood, setMood, query, setQuery, size, setSize, count, total
           {SIZES.map((s) =>
           <button
             key={s.value}
+            onPointerDown={(e) => e.preventDefault()}
             onClick={() => setSize(s.value)}
             style={{
               ...filterStyles.sizeBtn,
               ...(size === s.value ? filterStyles.sizeBtnOn : null)
             }}>
-            
+
               {s.label}
             </button>
           )}
@@ -202,12 +203,13 @@ function FilterBar({ mood, setMood, query, setQuery, size, setSize, count, total
         {MOODS.map((m) =>
         <button
           key={m}
+          onPointerDown={(e) => e.preventDefault()}
           onClick={() => setMood(m)}
           style={{
             ...filterStyles.chip,
             ...(mood === m ? filterStyles.chipOn : null)
           }}>
-          
+
             {m}
           </button>
         )}
@@ -218,7 +220,7 @@ function FilterBar({ mood, setMood, query, setQuery, size, setSize, count, total
 
 }
 
-function StickerCard({ sticker, size, showChecker, cardBg, showCaption, onOpen, onDownload }) {
+function StickerCard({ sticker, size, showChecker, cardBg, showCaption, onOpen, onDownload, onDelete }) {
   const path = stickerPath(sticker);
   const bgClass = showChecker ? 'checker' : '';
   const bgStyle = !showChecker ?
@@ -230,12 +232,20 @@ function StickerCard({ sticker, size, showChecker, cardBg, showCaption, onOpen, 
 
   return (
     <article style={cardStyles.wrap}>
+      {sticker.isCustom && onDelete && (
+        <button
+          style={cardStyles.deleteBtn}
+          onClick={(e) => { e.stopPropagation(); onDelete(sticker.customId); }}
+          title="削除">
+          ×
+        </button>
+      )}
       <button
         className={bgClass}
         style={{ ...cardStyles.thumb, ...bgStyle }}
         onClick={() => onOpen(sticker)}
         aria-label={`${sticker.caption} を拡大`}>
-        
+
         <img src={path} alt={sticker.caption} style={cardStyles.img} />
         <span style={cardStyles.zoom}><ZoomIcon /></span>
       </button>
@@ -243,7 +253,9 @@ function StickerCard({ sticker, size, showChecker, cardBg, showCaption, onOpen, 
         <div style={cardStyles.metaText}>
           {showCaption && <div className="maru" style={cardStyles.caption}>{sticker.caption}</div>}
           <div style={cardStyles.subline}>
-            <span className="mono" style={cardStyles.id}>{String(sticker.sheet)}-{String(sticker.idx).padStart(2, '0')}</span>
+            <span className="mono" style={cardStyles.id}>
+              {sticker.isCustom ? sticker.customId : `${String(sticker.sheet)}-${String(sticker.idx).padStart(2, '0')}`}
+            </span>
             <span style={cardStyles.tag}>{sticker.mood}</span>
           </div>
         </div>
@@ -251,7 +263,7 @@ function StickerCard({ sticker, size, showChecker, cardBg, showCaption, onOpen, 
           onClick={(e) => {e.stopPropagation();onDownload(sticker, size);}}
           style={cardStyles.dlBtn}
           title={`${sticker.caption} をダウンロード`}>
-          
+
           <DownloadIcon />
         </button>
       </div>
@@ -364,6 +376,10 @@ function App() {
   const [customStickers, setCustomStickers] = useState([]);
   const customCounter = useRef(0);
 
+  const handleDeleteCustom = useCallback((customId) => {
+    setCustomStickers(prev => prev.filter(s => s.customId !== customId));
+  }, []);
+
   const handleAddToGallery = useCallback((extracted) => {
     const id = `custom_${++customCounter.current}`;
     const freshUrl = URL.createObjectURL(extracted.blob);
@@ -466,7 +482,8 @@ function App() {
             cardBg={tweaks.cardBg}
             showCaption={tweaks.showCaptions}
             onOpen={setOpen}
-            onDownload={handleDownload} />
+            onDownload={handleDownload}
+            onDelete={handleDeleteCustom} />
 
           )}
           {filtered.length === 0 &&
@@ -692,7 +709,17 @@ const cardStyles = {
     border: '1px solid var(--line)',
     borderRadius: 18, overflow: 'hidden',
     boxShadow: 'var(--shadow)',
-    transition: 'transform 160ms ease, box-shadow 160ms ease'
+    transition: 'transform 160ms ease, box-shadow 160ms ease',
+    position: 'relative',
+  },
+  deleteBtn: {
+    position: 'absolute', top: 6, left: 6, zIndex: 10,
+    width: 24, height: 24, borderRadius: 999,
+    background: 'rgba(43,38,32,0.7)', color: 'white',
+    border: 'none', cursor: 'pointer',
+    fontSize: 16, lineHeight: 1,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontFamily: 'inherit',
   },
   thumb: {
     position: 'relative',

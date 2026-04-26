@@ -46,13 +46,14 @@ const STICKERS = [
 
 
 const ASSET_VERSION = 'v4';
-const stickerPath = (s) => `stickers/${s.sheet}_${String(s.idx).padStart(2, '0')}_${s.id}.png?${ASSET_VERSION}`;
+const stickerPath = (s) => s.isCustom ? s.url : `stickers/${s.sheet}_${String(s.idx).padStart(2, '0')}_${s.id}.png?${ASSET_VERSION}`;
 const stickerFilename = (s, size) => {
   const sz = size === 'original' ? '' : `_${size}`;
+  if (s.isCustom) return `${s.customId}${sz}.png`;
   return `${String(s.sheet)}_${String(s.idx).padStart(2, '0')}_${s.id}${sz}.png`;
 };
 
-const MOODS = ['すべて', '仕事', '日常', '感謝', '謝罪', '弱音', '返事'];
+const MOODS = ['すべて', '仕事', '日常', '感謝', '謝罪', '弱音', '返事', 'カスタム'];
 const SIZES = [
 { value: 'original', label: 'オリジナル' },
 { value: '512', label: '512px' },
@@ -167,7 +168,7 @@ function Hero({ onDownloadAll, downloading, progress, total }) {
 
 }
 
-function FilterBar({ mood, setMood, query, setQuery, size, setSize, count }) {
+function FilterBar({ mood, setMood, query, setQuery, size, setSize, count, total }) {
   return (
     <div style={filterStyles.wrap} id="gallery">
       <div style={filterStyles.row}>
@@ -211,7 +212,7 @@ function FilterBar({ mood, setMood, query, setQuery, size, setSize, count }) {
           </button>
         )}
         <span style={filterStyles.spacer}></span>
-        <span className="mono" style={filterStyles.count}>{count} / {STICKERS.length}</span>
+        <span className="mono" style={filterStyles.count}>{count} / {total}</span>
       </div>
     </div>);
 
@@ -360,12 +361,30 @@ function App() {
   const [copyState, setCopyState] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [customStickers, setCustomStickers] = useState([]);
+  const customCounter = useRef(0);
+
+  const handleAddToGallery = useCallback((extracted) => {
+    const id = `custom_${++customCounter.current}`;
+    setCustomStickers(prev => [...prev, {
+      customId: id,
+      id,
+      caption: `カスタム ${customCounter.current}`,
+      mood: 'カスタム',
+      url: extracted.url,
+      isCustom: true,
+      width: extracted.width,
+      height: extracted.height,
+    }]);
+  }, []);
+
+  const allStickers = useMemo(() => [...STICKERS, ...customStickers], [customStickers]);
 
   // sync size when tweak default changes
   useEffect(() => {setSize(tweaks.defaultSize);}, [tweaks.defaultSize]);
 
   const filtered = useMemo(() => {
-    return STICKERS.filter((s) => {
+    return allStickers.filter((s) => {
       if (mood !== 'すべて' && s.mood !== mood) return false;
       if (query) {
         const q = query.toLowerCase();
@@ -431,7 +450,8 @@ function App() {
           mood={mood} setMood={setMood}
           query={query} setQuery={setQuery}
           size={size} setSize={setSize}
-          count={filtered.length} />
+          count={filtered.length}
+          total={allStickers.length} />
         
         <div style={mainStyles.grid}>
           {filtered.map((s) =>
@@ -454,7 +474,7 @@ function App() {
           }
         </div>
       </main>
-      <StickerUploader />
+      <StickerUploader onAddToGallery={handleAddToGallery} />
       <Footer />
 
       {open &&
@@ -838,6 +858,7 @@ const styleEl = document.createElement('style');
 styleEl.textContent = `
   article:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(43,38,32,0.04), 0 16px 30px -14px rgba(43,38,32,0.28) !important; }
   article:hover [data-zoom] { opacity: 1; }
+  button { outline: none; }
   button:focus-visible, a:focus-visible, input:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 2px;
   }

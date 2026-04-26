@@ -220,7 +220,7 @@ const gridStyles = {
 
 // ── Main uploader component ─────────────────────────────────────────────────
 
-function StickerUploader() {
+function StickerUploader({ onAddToGallery }) {
   const [imageURL, setImageURL] = useState(null);
   const [imageEl, setImageEl] = useState(null);
   const [imgDims, setImgDims] = useState({ w: 0, h: 0 });
@@ -559,6 +559,15 @@ function StickerUploader() {
                       </button>
                     ))}
                   </div>
+                  {onAddToGallery && (
+                    <button
+                      onClick={() => onAddToGallery(r)}
+                      style={uStyles.addToGalleryBtn}
+                      title="上のギャラリーに追加"
+                    >
+                      ＋ ギャラリーに追加
+                    </button>
+                  )}
                 </div>
               )
             )}
@@ -834,6 +843,20 @@ const uStyles = {
     background: 'var(--accent)',
     borderColor: 'var(--accent)',
     color: 'white',
+  },
+  addToGalleryBtn: {
+    display: 'block',
+    width: '100%',
+    padding: '7px 0',
+    border: 'none',
+    borderTop: '1px solid var(--line)',
+    background: 'var(--accent-soft)',
+    color: 'var(--accent)',
+    fontSize: 11,
+    fontWeight: 700,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    letterSpacing: '0.02em',
   },
   resultEmpty: {
     aspectRatio: '1 / 1',

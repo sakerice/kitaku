@@ -26,12 +26,8 @@ function CropEditor({ canvas, onConfirm, onCancel }) {
 
   const W = expanded.width, H = expanded.height;
 
-  // Responsive scale: fit within viewport minus modal chrome
-  const MAXDIM = Math.min(
-    window.innerWidth - 120,
-    window.innerHeight - 240,
-    520
-  );
+  // iOS SafariはinnerHeightが不安定なため、幅だけで算出
+  const MAXDIM = Math.min(window.innerWidth - 80, 480);
   const scale = Math.min(1, MAXDIM / Math.max(W, H));
   const dispW = Math.round(W * scale);
   const dispH = Math.round(H * scale);

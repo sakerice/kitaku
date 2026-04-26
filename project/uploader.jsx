@@ -7,6 +7,32 @@
 
 const { useState, useRef, useCallback, useEffect, useMemo } = React;
 
+const ASPECT_RATIOS = [
+  { v: 'original', label: '元' },
+  { v: '1:1',  label: '1:1' },
+  { v: '4:3',  label: '4:3' },
+  { v: '3:4',  label: '3:4' },
+  { v: '16:9', label: '16:9' },
+  { v: '9:16', label: '9:16' },
+];
+
+function fitCanvasToRatio(srcCanvas, ratio) {
+  if (ratio === 'original') return srcCanvas;
+  const [rw, rh] = ratio.split(':').map(Number);
+  const sw = srcCanvas.width, sh = srcCanvas.height;
+  let tw, th;
+  if (sw / sh > rw / rh) { tw = sw; th = Math.round(sw * rh / rw); }
+  else                    { th = sh; tw = Math.round(sh * rw / rh); }
+  const out = document.createElement('canvas');
+  out.width = tw; out.height = th;
+  out.getContext('2d').drawImage(srcCanvas, Math.round((tw - sw) / 2), Math.round((th - sh) / 2));
+  return out;
+}
+
+function canvasToBlob(canvas) {
+  return new Promise(res => canvas.toBlob(res, 'image/png'));
+}
+
 // Build evenly-spaced lines across [0, total] with `count`+1 endpoints.
 function evenLines(count, total) {
   const out = [];
@@ -279,7 +305,7 @@ function StickerUploader() {
         xLines: xs,
         yLines: ys,
       });
-      setResults(out);
+      setResults(out.map(r => r.empty ? r : { ...r, originalCanvas: r.canvas, aspect: 'original' }));
     } catch (e) {
       console.error(e);
       setError(e.message || '処理に失敗しました');
@@ -287,6 +313,20 @@ function StickerUploader() {
       setBusy(false);
     }
   }, [imageEl, rows, cols, tolerance, bgMode, pickedColor, xs, ys]);
+
+  const changeAspect = useCallback(async (idx, ratio) => {
+    const r = results[idx];
+    if (!r || r.empty) return;
+    const newCanvas = fitCanvasToRatio(r.originalCanvas, ratio);
+    const blob = await canvasToBlob(newCanvas);
+    const url = URL.createObjectURL(blob);
+    if (r.url) URL.revokeObjectURL(r.url);
+    setResults(prev => {
+      const next = [...prev];
+      next[idx] = { ...r, canvas: newCanvas, blob, url, width: newCanvas.width, height: newCanvas.height, aspect: ratio };
+      return next;
+    });
+  }, [results]);
 
   const downloadOne = (r, idx) => {
     const a = document.createElement('a');
@@ -505,6 +545,20 @@ function StickerUploader() {
                   <span className="mono" style={uStyles.resultMeta}>
                     {r.width}×{r.height}
                   </span>
+                  <div style={uStyles.aspectRow}>
+                    {ASPECT_RATIOS.map(ar => (
+                      <button
+                        key={ar.v}
+                        onClick={() => changeAspect(i, ar.v)}
+                        style={{
+                          ...uStyles.aspectBtn,
+                          ...((r.aspect || 'original') === ar.v ? uStyles.aspectBtnOn : null),
+                        }}
+                      >
+                        {ar.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )
             )}
@@ -756,6 +810,30 @@ const uStyles = {
     background: 'rgba(255,252,245,0.85)',
     padding: '2px 6px',
     borderRadius: 4,
+  },
+  aspectRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 3,
+    padding: '6px 8px 8px',
+    borderTop: '1px solid var(--line)',
+    background: 'var(--card)',
+  },
+  aspectBtn: {
+    border: '1px solid var(--line)',
+    background: 'transparent',
+    color: 'var(--ink-2)',
+    padding: '3px 6px',
+    borderRadius: 999,
+    fontSize: 10,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    lineHeight: 1.4,
+  },
+  aspectBtnOn: {
+    background: 'var(--accent)',
+    borderColor: 'var(--accent)',
+    color: 'white',
   },
   resultEmpty: {
     aspectRatio: '1 / 1',

@@ -85,7 +85,7 @@ function CropEditor({ canvas, onConfirm, onCancel }) {
             {crop.r - crop.l} × {crop.b - crop.t} px
           </span>
         </div>
-        <div style={cropStyles.stageWrap}>
+        <div style={{ ...cropStyles.stageWrap, minHeight: dispH + 64 }}>
           <div
             className="checker"
             style={{ position: 'relative', width: dispW, height: dispH,
@@ -145,8 +145,6 @@ const cropStyles = {
     background: 'var(--bg)', border: '1px solid var(--line)',
     borderRadius: 20, overflow: 'hidden',
     maxWidth: 600, width: '100%',
-    maxHeight: 'calc(100svh - 40px)',
-    display: 'flex', flexDirection: 'column',
     boxShadow: '0 32px 80px -20px rgba(43,38,32,0.5)',
   },
   header: {
@@ -155,8 +153,7 @@ const cropStyles = {
   },
   stageWrap: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 32, background: '#1a1612',
-    flex: '1 1 0', minHeight: 0, overflow: 'auto',
+    padding: 32, background: '#1a1612', overflow: 'auto',
   },
   footer: {
     display: 'flex', gap: 8, justifyContent: 'flex-end',

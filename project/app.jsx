@@ -188,7 +188,7 @@ function FilterBar({ mood, setMood, query, setQuery, size, setSize, count, total
           <button
             key={s.value}
             onPointerDown={(e) => e.preventDefault()}
-            onClick={() => setSize(s.value)}
+            onClick={(e) => { setSize(s.value); e.currentTarget.blur(); }}
             style={{
               ...filterStyles.sizeBtn,
               ...(size === s.value ? filterStyles.sizeBtnOn : null)
@@ -204,7 +204,7 @@ function FilterBar({ mood, setMood, query, setQuery, size, setSize, count, total
         <button
           key={m}
           onPointerDown={(e) => e.preventDefault()}
-          onClick={() => setMood(m)}
+          onClick={(e) => { setMood(m); e.currentTarget.blur(); }}
           style={{
             ...filterStyles.chip,
             ...(mood === m ? filterStyles.chipOn : null)

@@ -366,7 +366,6 @@ function App() {
 
   const handleAddToGallery = useCallback((extracted) => {
     const id = `custom_${++customCounter.current}`;
-    // Create a fresh blob URL so applyCropTo revoking the result's URL doesn't break the gallery image
     const freshUrl = URL.createObjectURL(extracted.blob);
     setCustomStickers(prev => [...prev, {
       customId: id,
@@ -378,6 +377,8 @@ function App() {
       width: extracted.width,
       height: extracted.height,
     }]);
+    setMood('カスタム');
+    setTimeout(() => document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth' }), 50);
   }, []);
 
   const allStickers = useMemo(() => [...STICKERS, ...customStickers], [customStickers]);
@@ -458,7 +459,7 @@ function App() {
         <div style={mainStyles.grid}>
           {filtered.map((s) =>
           <StickerCard
-            key={`${s.sheet}-${s.idx}`}
+            key={s.isCustom ? s.customId : `${s.sheet}-${s.idx}`}
             sticker={s}
             size={size}
             showChecker={tweaks.showChecker}
@@ -661,7 +662,7 @@ const filterStyles = {
     border: 'none', background: 'transparent',
     padding: '8px 14px', borderRadius: 999, cursor: 'pointer',
     fontSize: 13, fontFamily: 'inherit', color: 'var(--ink-2)',
-    fontWeight: 500
+    fontWeight: 500, outline: 'none'
   },
   sizeBtnOn: {
     background: 'var(--ink)', color: 'var(--bg)'
@@ -674,7 +675,7 @@ const filterStyles = {
     background: 'transparent', color: 'var(--ink)',
     padding: '7px 14px', borderRadius: 999,
     fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-    transition: 'all 120ms ease'
+    transition: 'all 120ms ease', outline: 'none'
   },
   chipOn: {
     background: 'var(--accent)', borderColor: 'var(--accent)',

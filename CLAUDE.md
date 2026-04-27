@@ -6,12 +6,6 @@
 
 **GitHub:** https://github.com/sakerice/kitaku
 
-新しいセッションで push する際は以下を実行：
-```bash
-git remote set-url origin https://<TOKEN>@github.com/sakerice/kitaku.git
-git push -u origin main
-```
-
 ## プロジェクト構成
 
 ```
@@ -21,13 +15,13 @@ project/
   tweaks-panel.jsx  # デザイン調整パネル
   extractor.jsx     # スタンプシート切り出しロジック
   uploader.jsx      # シート画像アップロードUI
-  stickers/         # 透過PNG（29枚）
+  stickers/         # 透過PNG
 ```
 
 ## ワークフロー
 
 ```
-Claude Design → エクスポート → 新しいClaudeセッション → git push → GitHub
+Claude Design → エクスポート → Claude Code セッション → git push → GitHub
 ```
 
 **Claude Design での変更 → Claude Code への反映は手動エクスポートが必要。**
@@ -39,3 +33,15 @@ Claude Design → エクスポート → 新しいClaudeセッション → git 
 - JSZip で一括DL（ZIP）
 - スタンプ画像は `stickers/{sheet}_{idx:02}_{id}.png?v4` の命名規則
 - Tweaksパネル: `useTweaks(TWEAK_DEFAULTS)` → `[values, setTweak]` のタプル形式
+- カスタムスタンプは IndexedDB（`kitaku-custom`）に blob で永続化
+
+---
+
+## Claude Design 向け：デプロイ手順
+
+Claude Design セッションからpushする場合（クラウドで動くため認証が必要）：
+
+```bash
+git remote set-url origin https://<TOKEN>@github.com/sakerice/kitaku.git
+git push -u origin main
+```

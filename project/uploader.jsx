@@ -705,7 +705,7 @@ function StickerUploader({ onAddToGallery }) {
             )}
           </div>
           <p style={uStyles.warning}>
-            ※ ここで生成されたPNGはセッション中のみ保持されます。リロードで消えますのでダウンロードしてご利用ください。
+            ※ ギャラリーに追加したスタンプはブラウザに保存されます。ダウンロードしておくと別の端末でも使えます。
           </p>
         </div>
       )}

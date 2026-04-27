@@ -60,6 +60,53 @@ const SIZES = [
 { value: '256', label: '256px' }];
 
 
+// --- IndexedDB persistence for custom stickers ---
+const DB_NAME = 'kitaku-custom';
+const DB_STORE = 'stickers';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE))
+        db.createObjectStore(DB_STORE, { keyPath: 'customId' });
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function dbSave(record) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(record);
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function dbDelete(customId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(customId);
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function dbLoadAll() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).getAll();
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
 // --- Utilities ---
 async function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -376,23 +423,39 @@ function App() {
   const [customStickers, setCustomStickers] = useState([]);
   const customCounter = useRef(0);
 
+  // Load persisted custom stickers from IndexedDB on mount
+  useEffect(() => {
+    dbLoadAll().then((rows) => {
+      if (!rows.length) return;
+      const max = rows.reduce((m, r) => {
+        const n = parseInt(r.customId.replace('custom_', ''), 10);
+        return isNaN(n) ? m : Math.max(m, n);
+      }, 0);
+      customCounter.current = max;
+      setCustomStickers(rows.map(r => ({ ...r, url: URL.createObjectURL(r.blob) })));
+    }).catch(() => {});
+  }, []);
+
   const handleDeleteCustom = useCallback((customId) => {
+    dbDelete(customId).catch(() => {});
     setCustomStickers(prev => prev.filter(s => s.customId !== customId));
   }, []);
 
   const handleAddToGallery = useCallback((extracted) => {
     const id = `custom_${++customCounter.current}`;
     const freshUrl = URL.createObjectURL(extracted.blob);
-    setCustomStickers(prev => [...prev, {
+    const dbRecord = {
       customId: id,
       id,
       caption: `カスタム ${customCounter.current}`,
       mood: 'カスタム',
-      url: freshUrl,
       isCustom: true,
       width: extracted.width,
       height: extracted.height,
-    }]);
+      blob: extracted.blob,
+    };
+    dbSave(dbRecord).catch(() => {});
+    setCustomStickers(prev => [...prev, { ...dbRecord, url: freshUrl }]);
     setMood('カスタム');
     setTimeout(() => document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth' }), 50);
   }, []);
@@ -689,10 +752,13 @@ const filterStyles = {
   },
   chip: {
     border: '1px solid var(--line)',
-    background: 'transparent', color: 'var(--ink)',
+    borderColor: 'var(--line)',
+    background: 'rgba(200,101,74,0)',
+    color: 'var(--ink)',
     padding: '7px 14px', borderRadius: 999,
     fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-    transition: 'all 120ms ease', outline: 'none'
+    transition: 'background 120ms ease, color 120ms ease, border-color 120ms ease',
+    outline: 'none'
   },
   chipOn: {
     background: 'var(--accent)', borderColor: 'var(--accent)',

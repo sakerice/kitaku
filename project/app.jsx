@@ -163,11 +163,11 @@ function Hero({ onDownloadAll, downloading, progress, total }) {
         </div>
         <h1 className="maru" style={{ ...heroStyles.title, borderStyle: "solid", borderRadius: "0px", borderWidth: "0px", padding: "0px", opacity: "1.08", gap: "3px" }}>
           きたくったりん
-          <span style={heroStyles.titleSub}>KITAKUTTARIN STAMP</span>
+          <span style={heroStyles.titleSub}>社畜妖精 · KITAKUTTARIN STAMP</span>
         </h1>
         <p style={heroStyles.lede}>
-          ネクタイをしめたまま、ちょっと疲れたあの子の<br />
-          スタンプ24種を、背景透過のPNGで配布します。
+          社畜妖精きたくったりんの<br />
+          スタンプを、背景透過のPNGで配布します。
         </p>
         <div style={heroStyles.ctaRow}>
           <button
@@ -379,7 +379,7 @@ function Footer() {
   return (
     <footer style={footerStyles.wrap}>
       <div style={footerStyles.inner}>
-        <div className="maru" style={footerStyles.brand}>帰宅スタンプ</div>
+        <div className="maru" style={footerStyles.brand}>社畜妖精きたくったりん</div>
         <p style={footerStyles.note}>
           すべての画像は背景透過PNGで配布しています。<br />
           チャットアプリ・SNS・社内資料などでご自由にお使いください。<br />

@@ -1,25 +1,59 @@
-# CODING AGENTS: READ THIS FIRST
+# 帰宅スタンプ — きたくったりん
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+ネクタイをしめたまま、ちょっと疲れたあの子のスタンプを配布する静的サイト。  
+透過PNG形式のスタンプをブラウザから直接ダウンロードできます。
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+**公開URL:** https://sakerice.github.io/kitaku/project/
 
-## What you should do — IMPORTANT
+---
 
-**Read the chat transcripts first.** There are 2 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+## 特徴
 
-**Read `project/index.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+- 透過PNG / 白フチつき / 約420px
+- 個別ダウンロード・まとめてZIPダウンロード
+- ムード別タブフィルター（仕事・日常・感謝・謝罪・弱音・返事）
+- シート画像から自動切り出し（グリッド編集・背景除去・白フチ生成）
+- 切り出したカスタムスタンプはブラウザ（IndexedDB）に保存され、リロード後も維持
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## プロジェクト構成
 
-## About the design files
+```
+project/
+  index.html        # エントリーポイント（Babel + React、ビルド不要）
+  app.jsx           # メインアプリ（スタンプ一覧・モーダル・DL）
+  tweaks-panel.jsx  # デザイン調整パネル
+  extractor.jsx     # スタンプシート切り出しロジック
+  uploader.jsx      # シート画像アップロードUI
+  stickers/         # 透過PNG画像・manifest.json
+  uploads/          # シート画像の作業ファイル（参考用）
+chats/              # Claude Designとの会話ログ（設計経緯）
+```
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+## 技術スタック
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+- React 18 + Babel standalone（ビルドツール不要）
+- JSZip（ZIPダウンロード）
+- IndexedDB（カスタムスタンプの永続化）
+- Canvas API（シート切り出し・背景除去・白フチ生成）
 
-## Bundle contents
+## ローカルで動かす
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `kitaku_stamp` project files (HTML prototypes, assets, components)
+ビルド不要。`project/` をローカルサーバーで配信するだけで動きます。
+
+```bash
+# 例: Python
+cd project
+python3 -m http.server 8080
+# → http://localhost:8080
+```
+
+## スタンプの追加
+
+1. `project/stickers/` に透過PNGを追加（命名規則: `{sheet}_{idx:02}_{id}.png`）
+2. `project/app.jsx` の `STICKERS` 配列にエントリを追記
+
+または「シート画像から自動切り出し」機能でブラウザ上から追加できます。
+
+## ライセンス
+
+スタンプ画像は個人利用OK。二次配布・再販売・素材集への収録はご遠慮ください。

@@ -107,6 +107,9 @@ async function dbLoadAll() {
   });
 }
 
+// ページロードごとにランダムで1枚選ぶ（リロードで変わる）
+const BG_STICKER = STICKERS[Math.floor(Math.random() * STICKERS.length)];
+
 // --- Utilities ---
 async function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -205,11 +208,7 @@ function Hero({ onDownloadAll, downloading, progress, total }) {
           </div>
         </dl>
       </div>
-      <div style={heroStyles.peekRow} aria-hidden="true">
-        {[0, 5, 13, 17, 21].map((i) =>
-        <img key={i} src={stickerPath(STICKERS[i])} style={heroStyles.peek} alt="" />
-        )}
-      </div>
+      <img src={stickerPath(BG_STICKER)} style={heroStyles.bgSticker} alt="" aria-hidden="true" />
     </header>);
 
 }
@@ -671,18 +670,17 @@ const heroStyles = {
   },
   metaKey: { fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-2)', margin: 0 },
   metaVal: { fontSize: 15, fontWeight: 500, margin: '6px 0 0', color: 'var(--ink)' },
-  peekRow: {
+  bgSticker: {
     position: 'absolute',
-    top: 24, right: -40,
-    display: 'flex', gap: 4,
-    opacity: 0.55,
-    pointerEvents: 'none',
-    zIndex: 1
-  },
-  peek: {
-    width: 'clamp(70px, 9vw, 110px)',
+    right: '4%',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: 'clamp(260px, 38vw, 500px)',
     height: 'auto',
-    transform: 'rotate(-6deg)'
+    opacity: 0.10,
+    pointerEvents: 'none',
+    userSelect: 'none',
+    zIndex: 1,
   }
 };
 

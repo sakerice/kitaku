@@ -161,7 +161,7 @@ function Hero({ onDownloadAll, downloading, progress, total }) {
           <span style={heroStyles.dot}></span>
           <span style={heroStyles.eyebrow} className="mono">{STICKERS.length} STICKERS · PNG · 透過</span>
         </div>
-        <h1 className="maru" style={{ ...heroStyles.title, borderStyle: "solid", borderRadius: "0px", borderWidth: "0px", padding: "0px", opacity: "1.08", gap: "3px" }}>
+        <h1 className="maru" style={{ ...heroStyles.title, flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
           きたくったりん
           <span style={heroStyles.titleSub}>社畜妖精 · KITAKUTTARIN STAMP</span>
         </h1>

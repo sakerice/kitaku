@@ -163,7 +163,6 @@ function Hero({ onDownloadAll, downloading, progress, total }) {
         </div>
         <h1 className="maru" style={{ ...heroStyles.title, display: 'block' }}>
           きたくったりん
-          <span style={{ ...heroStyles.titleSub, display: 'block', marginTop: '14px' }}>社畜妖精 · KITAKUTTARIN STAMP</span>
         </h1>
         <p style={heroStyles.lede}>
           社畜妖精きたくったりんの<br />

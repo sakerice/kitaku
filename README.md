@@ -3,7 +3,7 @@
 社畜妖精きたくったりんのスタンプを配布する静的サイト。  
 透過PNG形式のスタンプをブラウザから直接ダウンロードできます。
 
-**公開URL:** https://sakerice.github.io/kitaku/project/
+**公開URL:** https://kitaku.srapps.us/
 
 ---
 
